@@ -44,6 +44,7 @@ const browser = await puppeteer.launch({
 });
 
 
+
         const page = await browser.newPage();
         console.log(`Navigating to ${url}...`);
 
@@ -101,7 +102,15 @@ const browser = await puppeteer.launch({
         }
     }
 });
+const exec = require('child_process').exec;
 
+exec('which google-chrome-stable', (err, stdout, stderr) => {
+  if (err || stderr) {
+    console.error('Error:', err || stderr);
+  } else {
+    console.log('Chrome Path:', stdout);
+  }
+});
 app.listen(PORT, () => {
     console.log(`✅ Server running on port ${PORT}`);
 });

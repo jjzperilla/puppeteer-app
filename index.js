@@ -30,14 +30,14 @@ app.get("/api/track", async (req, res) => {
         console.log(`Launching Puppeteer for tracking: ${trackingNumber}...`);
 
 const browser = await puppeteer.launch({
-    headless: "new",
-    executablePath: process.env.CHROMIUM_PATH || puppeteer.executablePath(),
+    headless: true,
+    executablePath: '/usr/bin/chromium-browser',
     args: [
-        "--no-sandbox",
-        "--disable-setuid-sandbox",
-        "--disable-gpu",
-        "--disable-dev-shm-usage",
-        "--disable-software-rasterizer",
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-gpu',
+        '--disable-dev-shm-usage',
+        '--disable-software-rasterizer',
     ],
 });
 

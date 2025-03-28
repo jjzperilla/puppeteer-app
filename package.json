@@ -11,6 +11,7 @@
   "user-agents": "^1.0.110"
   },
   "scripts": {
+ "build": "./render-build.sh",
   "start": "node index.js"
   }
 }

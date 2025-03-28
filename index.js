@@ -41,13 +41,13 @@ app.get("/api/track", async (req, res) => {
         // Block unnecessary resources to speed up the load
 		
         await page.setRequestInterception(true);
-        page.on("request", (request) => {
-            if (request.resourceType() === "image" || request.resourceType() === "stylesheet" || request.resourceType() === "font") {
-                request.abort();
-            } else {
-                request.continue();
-            }
-        });
+page.on("request", (request) => {
+    if (request.resourceType() === "image" || request.resourceType() === "stylesheet" || request.resourceType() === "font") {
+        request.abort(); // Block images, stylesheets, and fonts to speed up the load
+    } else {
+        request.continue(); // Continue with other requests
+    }
+});
 
         console.log("Navigating to:", url);
 

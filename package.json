@@ -12,6 +12,6 @@
   },
   "scripts": {
     "start": "node index.js",
-    "postinstall": "npx puppeteer install"
+    "postinstall": ""
   }
 }

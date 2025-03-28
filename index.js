@@ -29,9 +29,9 @@ app.get("/api/track", async (req, res) => {
     try {
         console.log(`Launching Puppeteer for tracking: ${trackingNumber}...`);
 
-        browser = await puppeteer.launch({
+  browser = await puppeteer.launch({
     headless: "new",
-    executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || "/usr/bin/google-chrome-stable",
+    executablePath: "/usr/bin/google-chrome-stable", // Use system-installed Chrome
     args: [
         "--no-sandbox",
         "--disable-setuid-sandbox",

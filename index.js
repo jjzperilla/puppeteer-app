@@ -18,11 +18,17 @@ app.get("/api/track", async (req, res) => {
     let browser;
 
     try {
+        console.log("Starting to scrape tracking number:", trackingNumber);
+
+        // Launch Chromium and log confirmation
         browser = await puppeteer.launch({
             headless: "new", // Use the latest headless mode
             executablePath: '/opt/render/project/.render/chrome/opt/google/chrome/chrome',
-            args: ["--no-sandbox", "--disable-setuid-sandbox"]
+            args: ["--no-sandbox", "--disable-setuid-sandbox"],
+            timeout: 180000 // Increase browser launch timeout
         });
+
+        console.log("Chromium launched successfully");
 
         const page = await browser.newPage();
 
@@ -42,12 +48,16 @@ app.get("/api/track", async (req, res) => {
             }
         });
 
-        // Set a longer timeout for page navigation
-        await page.goto(url, { waitUntil: "networkidle2", timeout: 120000 });
+        console.log("Navigating to:", url);
+
+        // Set the waitUntil to "domcontentloaded" for faster loading
+        await page.goto(url, { waitUntil: "domcontentloaded", timeout: 120000 });
 
         await page.waitForFunction(() => {
             return !document.body.innerText.includes("Please reload the page");
         }, { timeout: 120000 }).catch(() => console.log("Wait function timed out"));
+
+        console.log("Page loaded, scraping data...");
 
         const trackingEvents = await page.evaluate(() => {
             return Array.from(document.querySelectorAll(".event")).map(event => ({
@@ -75,13 +85,17 @@ app.get("/api/track", async (req, res) => {
             return res.status(404).json({ error: "Tracking information not found." });
         }
 
+        console.log("Scraping completed successfully.");
         res.json({ tracking_details: trackingEvents, parcel_info: parcelInfo });
 
     } catch (error) {
         console.error("Scraping error:", error);
         res.status(500).json({ error: error.message });
     } finally {
-        if (browser) await browser.close();
+        if (browser) {
+            console.log("Closing the browser.");
+            await browser.close();
+        }
     }
 });
 

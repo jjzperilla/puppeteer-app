@@ -20,11 +20,18 @@ app.get("/api/track", async (req, res) => {
     try {
         console.log(`Starting to scrape tracking number: ${trackingNumber}`);
         
-        browser = await puppeteer.launch({
-            headless: false, // Run with UI for debugging
-            executablePath: '/opt/render/project/.render/chrome/opt/google/chrome/chrome',
-            args: ["--no-sandbox", "--disable-setuid-sandbox"]
-        });
+      browser = await puppeteer.launch({
+    headless: true, // Use headless mode
+    executablePath: '/opt/render/project/.render/chrome/opt/google/chrome/chrome',
+    args: [
+        "--no-sandbox", 
+        "--disable-setuid-sandbox",
+        "--disable-software-rasterizer",
+        "--headless",  // Ensure headless mode is enforced
+        "--disable-gpu",
+        "--remote-debugging-port=9222" // Enable debugging port for remote
+    ]
+});
 
         const page = await browser.newPage();
 

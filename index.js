@@ -23,7 +23,7 @@ app.get("/api/track", async (req, res) => {
         // Launch Chromium and log confirmation
         browser = await puppeteer.launch({
             headless: "new", // Use the latest headless mode
-            executablePath: '/opt/render/project/.render/chrome/opt/google/chrome/chrome',
+            
             args: ["--no-sandbox", "--disable-setuid-sandbox"],
             timeout: 180000 // Increase browser launch timeout
         });
@@ -41,18 +41,19 @@ app.get("/api/track", async (req, res) => {
         // Block unnecessary resources to speed up the load
 		
         await page.setRequestInterception(true);
-page.on("request", (request) => {
-    if (request.resourceType() === "image" || request.resourceType() === "stylesheet" || request.resourceType() === "font") {
-        request.abort(); // Block images, stylesheets, and fonts to speed up the load
+page.setRequestInterception(true);
+page.on('request', (request) => {
+    if (['image', 'stylesheet', 'font'].includes(request.resourceType())) {
+        request.abort();
     } else {
-        request.continue(); // Continue with other requests
+        request.continue();
     }
 });
 
         console.log("Navigating to:", url);
 
         // Set the waitUntil to "domcontentloaded" for faster loading
-        await page.goto(url, { waitUntil: "networkidle2", timeout: 120000 });
+        await page.goto(url, { waitUntil: "networkidle0", timeout: 120000 });
 
         await page.waitForFunction(() => {
             return !document.body.innerText.includes("Please reload the page");

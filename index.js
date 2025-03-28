@@ -29,19 +29,19 @@ app.get("/api/track", async (req, res) => {
     try {
         console.log(`Launching Puppeteer for tracking: ${trackingNumber}...`);
 
-        browser = await puppeteer.launch({
-            headless: "new",
-            executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || puppeteer.executablePath(),
-            args: [
-                "--no-sandbox",
-                "--disable-setuid-sandbox",
-                "--disable-gpu",
-                "--disable-dev-shm-usage",
-                "--disable-software-rasterizer",
-                "--proxy-server='direct://'",
-                "--proxy-bypass-list=*",
-            ],
-        });
+       browser = await puppeteer.launch({
+    headless: false, // Try setting to false for testing
+    args: [
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--disable-gpu",
+        "--disable-dev-shm-usage",
+        "--disable-software-rasterizer",
+        "--disable-blink-features=AutomationControlled", // Hides Puppeteer
+        "--remote-debugging-port=9222", // Helps with debugging
+        "--disable-features=IsolateOrigins,site-per-process", // Extra bypass
+    ],
+});
 
         const page = await browser.newPage();
         console.log(`Navigating to ${url}...`);

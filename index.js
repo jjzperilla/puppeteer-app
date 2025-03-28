@@ -30,17 +30,17 @@ app.get("/api/track", async (req, res) => {
         console.log(`Launching Puppeteer for tracking: ${trackingNumber}...`);
 
 const browser = await puppeteer.launch({
-    headless: true,
-    executablePath: '/usr/bin/google-chrome-stable',
-    args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-gpu',
-        '--disable-dev-shm-usage',
-        '--disable-software-rasterizer',
-        '--proxy-server=direct://', // Removed extra quotes
-        '--proxy-bypass-list=*',
-    ],
+  headless: true,
+  executablePath: '/opt/render/project/.render/chrome/opt/google/chrome/chrome',
+  args: [
+    '--no-sandbox',
+    '--disable-setuid-sandbox',
+    '--disable-gpu',
+    '--disable-dev-shm-usage',
+    '--disable-software-rasterizer',
+    '--proxy-server="direct://"',
+    '--proxy-bypass-list=*',
+  ],
 });
 
 

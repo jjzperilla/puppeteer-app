@@ -11,7 +11,7 @@
     "user-agents": "^1.1.492"
   },
   "scripts": {
-    "start": "PUPPETEER_SKIP_DOWNLOAD=true node index.js",
-    "postinstall": ""
+     "postinstall": "npx puppeteer browsers install chrome",
+  "start": "node index.js"
   }
 }

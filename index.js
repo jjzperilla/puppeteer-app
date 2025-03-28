@@ -29,9 +29,9 @@ app.get("/api/track", async (req, res) => {
     try {
         console.log(`Launching Puppeteer for tracking: ${trackingNumber}...`);
 
-browser = await puppeteer.launch({
+const browser = await puppeteer.launch({
     headless: "new",
-    executablePath: "/usr/bin/chromium-browser", // Use Render's preinstalled Chromium
+    executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || puppeteer.executablePath(),
     args: [
         "--no-sandbox",
         "--disable-setuid-sandbox",

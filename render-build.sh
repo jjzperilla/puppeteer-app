@@ -1,20 +1,22 @@
 #!/usr/bin/env bash
-set -o errexit  # Exit on error
+# exit on error
+set -o errexit
 
-# Update package lists
-apt-get update
+STORAGE_DIR=/opt/render/project/.render
 
-# Install necessary packages
-apt-get install -y wget unzip
+if [[ ! -d $STORAGE_DIR/chrome ]]; then
+  echo "...Downloading Chrome"
+  mkdir -p $STORAGE_DIR/chrome
+  cd $STORAGE_DIR/chrome
+  wget -P ./ https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+  dpkg -x ./google-chrome-stable_current_amd64.deb $STORAGE_DIR/chrome
+  rm ./google-chrome-stable_current_amd64.deb
+  cd $HOME/project/src # Make sure we return to where we were
+else
+  echo "...Using Chrome from cache"
+fi
 
-# Download the latest stable version of Chromium
-wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+# be sure to add Chromes location to the PATH as part of your Start Command
+# export PATH="${PATH}:/opt/render/project/.render/chrome/opt/google/chrome"
 
-# Install the downloaded package
-dpkg -i google-chrome-stable_current_amd64.deb || apt-get -fy install
-
-# Clean up
-rm google-chrome-stable_current_amd64.deb
-
-# Install Node.js dependencies
-npm install
+# add your own build commands...

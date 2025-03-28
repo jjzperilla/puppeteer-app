@@ -2,20 +2,11 @@ const express = require("express");
 const puppeteer = require("puppeteer-extra");
 const StealthPlugin = require("puppeteer-extra-plugin-stealth");
 const cors = require("cors");
-const randomUserAgent = require("user-agents");
 
 puppeteer.use(StealthPlugin());
 
 const app = express();
 app.use(cors());
-
-const PORT = process.env.PORT || 3000;
-
-console.log(`Server starting on port ${PORT}...`);
-
-app.get("/", (req, res) => {
-    res.send("Tracking API is running.");
-});
 
 app.get("/api/track", async (req, res) => {
     const trackingNumber = req.query.num;
@@ -27,40 +18,26 @@ app.get("/api/track", async (req, res) => {
     let browser;
 
     try {
-        console.log(`Launching Puppeteer for tracking: ${trackingNumber}...`);
-
-const browser = await puppeteer.launch({
-  headless: true,
-  executablePath: '/opt/render/project/.render/chrome/opt/google/chrome/chrome',
-  args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-gpu',
-        '--disable-dev-shm-usage',
-        '--disable-software-rasterizer',
-        '--proxy-server="direct://"',
-        '--proxy-bypass-list=*',
-    ],
-});
-
-
+        browser = await puppeteer.launch({
+            headless: "new", // Use the latest headless mode
+            args: ["--no-sandbox", "--disable-setuid-sandbox"]
+        });
 
         const page = await browser.newPage();
-        console.log(`Navigating to ${url}...`);
 
-        await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3');
+        await page.setUserAgent(
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36"
+        );
+
         await page.setExtraHTTPHeaders({ "Accept-Language": "en-US,en;q=0.9" });
 
         await page.goto(url, { waitUntil: "networkidle2", timeout: 60000 });
 
-        // Wait for tracking details to load properly
         await page.waitForFunction(() => {
-            return document.querySelector(".event") && !document.body.innerText.includes("No information about your package.");
-        }, { timeout: 60000 }).catch(() => console.log("Tracking info not found or blocked."));
+            return !document.body.innerText.includes("Please reload the page");
+        }, { timeout: 60000 }).catch(() => console.log("Wait function timed out"));
 
-        console.log("Extracting tracking details...");
-
-        let trackingEvents = await page.evaluate(() => {
+        const trackingEvents = await page.evaluate(() => {
             return Array.from(document.querySelectorAll(".event")).map(event => ({
                 date: event.querySelector(".event-time strong")?.innerText.trim() || "N/A",
                 time: event.querySelector(".event-time span")?.innerText.trim() || "N/A",
@@ -69,41 +46,34 @@ const browser = await puppeteer.launch({
             }));
         });
 
-        if (!trackingEvents.length || trackingEvents.some(e => e.status === "No information about your package.")) {
-            console.warn("Tracking data not found, retrying...");
-            await page.reload({ waitUntil: "networkidle2" });
-            await page.waitForTimeout(3000);
+        const parcelInfo = await page.evaluate(() => {
+            const getText = (selector) => document.querySelector(selector)?.innerText.trim() || "N/A";
 
-            trackingEvents = await page.evaluate(() => {
-                return Array.from(document.querySelectorAll(".event")).map(event => ({
-                    date: event.querySelector(".event-time strong")?.innerText.trim() || "N/A",
-                    time: event.querySelector(".event-time span")?.innerText.trim() || "N/A",
-                    status: event.querySelector(".event-content strong")?.innerText.trim() || "N/A",
-                    courier: event.querySelector(".carrier")?.innerText.trim() || "N/A"
-                }));
-            });
-        }
+            return {
+                tracking_number: getText(".parcel-attributes tr:nth-child(1) .value span"),
+                origin: getText(".parcel-attributes tr:nth-child(2) .value span:nth-child(2)"),
+                destination: getText(".parcel-attributes tr:nth-child(3) .value span:nth-child(2)"),
+                courier: getText(".parcel-attributes tr:nth-child(4) .value a"),
+                days_in_transit: getText(".parcel-attributes tr:nth-child(6) .value span"),
+                tracking_link: getText(".tracking-link input")
+            };
+        });
 
         if (!trackingEvents.length) {
-            console.warn("No tracking information found.");
             return res.status(404).json({ error: "Tracking information not found." });
         }
 
-        console.log("Tracking details successfully extracted!");
-        res.json({ tracking_details: trackingEvents });
+        res.json({ tracking_details: trackingEvents, parcel_info: parcelInfo });
 
     } catch (error) {
         console.error("Scraping error:", error);
-        res.status(500).json({ error: "Scraping blocked by site" });
+        res.status(500).json({ error: error.message });
     } finally {
-        if (browser) {
-            console.log("Closing Puppeteer...");
-            await browser.close();
-        }
+        if (browser) await browser.close();
     }
 });
-console.log(process.env.PATH);
 
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-    console.log(`✅ Server running on port ${PORT}`);
+    console.log(`Server running on port ${PORT}`);
 });

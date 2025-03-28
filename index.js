@@ -38,8 +38,6 @@ app.get("/api/track", async (req, res) => {
                 "--disable-gpu",
                 "--disable-dev-shm-usage",
                 "--disable-software-rasterizer",
-                "--proxy-server='direct://'",
-                "--proxy-bypass-list=*",
             ],
         });
 
@@ -51,11 +49,14 @@ app.get("/api/track", async (req, res) => {
 
         await page.goto(url, { waitUntil: "networkidle2", timeout: 60000 });
 
-        // Wait for tracking details to appear
-        await page.waitForSelector(".event", { timeout: 60000 }).catch(() => console.log("Tracking info not found"));
+        // Wait for tracking details to load properly
+        await page.waitForFunction(() => {
+            return document.querySelector(".event") && !document.body.innerText.includes("No information about your package.");
+        }, { timeout: 60000 }).catch(() => console.log("Tracking info not found or blocked."));
 
         console.log("Extracting tracking details...");
-        const trackingEvents = await page.evaluate(() => {
+
+        let trackingEvents = await page.evaluate(() => {
             return Array.from(document.querySelectorAll(".event")).map(event => ({
                 date: event.querySelector(".event-time strong")?.innerText.trim() || "N/A",
                 time: event.querySelector(".event-time span")?.innerText.trim() || "N/A",
@@ -64,18 +65,20 @@ app.get("/api/track", async (req, res) => {
             }));
         });
 
-        const parcelInfo = await page.evaluate(() => {
-            const getText = (selector) => document.querySelector(selector)?.innerText.trim() || "N/A";
+        if (!trackingEvents.length || trackingEvents.some(e => e.status === "No information about your package.")) {
+            console.warn("Tracking data not found, retrying...");
+            await page.reload({ waitUntil: "networkidle2" });
+            await page.waitForTimeout(3000);
 
-            return {
-                tracking_number: getText(".parcel-attributes tr:nth-child(1) .value span"),
-                origin: getText(".parcel-attributes tr:nth-child(2) .value span:nth-child(2)"),
-                destination: getText(".parcel-attributes tr:nth-child(3) .value span:nth-child(2)"),
-                courier: getText(".parcel-attributes tr:nth-child(4) .value a"),
-                days_in_transit: getText(".parcel-attributes tr:nth-child(6) .value span"),
-                tracking_link: getText(".tracking-link input")
-            };
-        });
+            trackingEvents = await page.evaluate(() => {
+                return Array.from(document.querySelectorAll(".event")).map(event => ({
+                    date: event.querySelector(".event-time strong")?.innerText.trim() || "N/A",
+                    time: event.querySelector(".event-time span")?.innerText.trim() || "N/A",
+                    status: event.querySelector(".event-content strong")?.innerText.trim() || "N/A",
+                    courier: event.querySelector(".carrier")?.innerText.trim() || "N/A"
+                }));
+            });
+        }
 
         if (!trackingEvents.length) {
             console.warn("No tracking information found.");
@@ -83,7 +86,7 @@ app.get("/api/track", async (req, res) => {
         }
 
         console.log("Tracking details successfully extracted!");
-        res.json({ tracking_details: trackingEvents, parcel_info: parcelInfo });
+        res.json({ tracking_details: trackingEvents });
 
     } catch (error) {
         console.error("Scraping error:", error);

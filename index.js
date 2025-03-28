@@ -30,16 +30,16 @@ app.get("/api/track", async (req, res) => {
         console.log(`Launching Puppeteer for tracking: ${trackingNumber}...`);
 
         browser = await puppeteer.launch({
-            headless: "new",
-            executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || puppeteer.executablePath(),
-            args: [
-                "--no-sandbox",
-                "--disable-setuid-sandbox",
-                "--disable-gpu",
-                "--disable-dev-shm-usage",
-                "--disable-software-rasterizer",
-            ],
-        });
+    headless: "new",
+    executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || "/usr/bin/google-chrome-stable",
+    args: [
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--disable-gpu",
+        "--disable-dev-shm-usage",
+        "--disable-software-rasterizer",
+    ],
+});
 
         const page = await browser.newPage();
         console.log(`Navigating to ${url}...`);

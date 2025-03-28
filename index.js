@@ -18,11 +18,12 @@ app.get("/api/track", async (req, res) => {
     let browser;
 
     try {
+        console.log(`Starting to scrape tracking number: ${trackingNumber}`);
+        
         browser = await puppeteer.launch({
-            headless: "new", // Use the latest headless mode
+            headless: false, // Run with UI for debugging
             executablePath: '/opt/render/project/.render/chrome/opt/google/chrome/chrome',
-            args: ["--no-sandbox", "--disable-setuid-sandbox"],
-            timeout: 60000, // Increase the launch timeout
+            args: ["--no-sandbox", "--disable-setuid-sandbox"]
         });
 
         const page = await browser.newPage();
@@ -33,11 +34,11 @@ app.get("/api/track", async (req, res) => {
 
         await page.setExtraHTTPHeaders({ "Accept-Language": "en-US,en;q=0.9" });
 
-        await page.goto(url, { waitUntil: "networkidle2", timeout: 60000 });
+        console.log(`Navigating to ${url}`);
+        await page.goto(url, { waitUntil: "networkidle2", timeout: 120000 }); // Increased timeout
 
-        await page.waitForFunction(() => {
-            return !document.body.innerText.includes("Please reload the page");
-        }, { timeout: 60000 }).catch(() => console.log("Wait function timed out"));
+        console.log("Waiting for page elements to load...");
+        await page.waitForSelector(".parcel-attributes", { timeout: 120000 }); // Wait for a specific element
 
         const trackingEvents = await page.evaluate(() => {
             return Array.from(document.querySelectorAll(".event")).map(event => ({
@@ -62,16 +63,21 @@ app.get("/api/track", async (req, res) => {
         });
 
         if (!trackingEvents.length) {
+            console.log("No tracking information found.");
             return res.status(404).json({ error: "Tracking information not found." });
         }
 
+        console.log("Scraping successful!");
         res.json({ tracking_details: trackingEvents, parcel_info: parcelInfo });
 
     } catch (error) {
         console.error("Scraping error:", error);
         res.status(500).json({ error: error.message });
     } finally {
-        if (browser) await browser.close();
+        if (browser) {
+            console.log("Closing the browser.");
+            await browser.close();
+        }
     }
 });
 

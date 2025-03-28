@@ -33,14 +33,14 @@ const browser = await puppeteer.launch({
   headless: true,
   executablePath: '/opt/render/project/.render/chrome/opt/google/chrome/chrome',
   args: [
-    '--no-sandbox',
-    '--disable-setuid-sandbox',
-    '--disable-gpu',
-    '--disable-dev-shm-usage',
-    '--disable-software-rasterizer',
-    '--proxy-server="direct://"',
-    '--proxy-bypass-list=*',
-  ],
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-gpu',
+        '--disable-dev-shm-usage',
+        '--disable-software-rasterizer',
+        '--proxy-server="direct://"',
+        '--proxy-bypass-list=*',
+    ],
 });
 
 
@@ -48,7 +48,7 @@ const browser = await puppeteer.launch({
         const page = await browser.newPage();
         console.log(`Navigating to ${url}...`);
 
-        await page.setUserAgent(new randomUserAgent().toString());
+        await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3');
         await page.setExtraHTTPHeaders({ "Accept-Language": "en-US,en;q=0.9" });
 
         await page.goto(url, { waitUntil: "networkidle2", timeout: 60000 });

@@ -38,7 +38,7 @@ const browser = await puppeteer.launch({
         '--disable-gpu',
         '--disable-dev-shm-usage',
         '--disable-software-rasterizer',
-        '--proxy-server="direct://"',
+        '--proxy-server=direct://', // Removed extra quotes
         '--proxy-bypass-list=*',
     ],
 });

@@ -39,6 +39,7 @@ app.get("/api/track", async (req, res) => {
         await page.setExtraHTTPHeaders({ "Accept-Language": "en-US,en;q=0.9" });
 
         // Block unnecessary resources to speed up the load
+		
         await page.setRequestInterception(true);
         page.on("request", (request) => {
             if (request.resourceType() === "image" || request.resourceType() === "stylesheet" || request.resourceType() === "font") {
@@ -51,7 +52,7 @@ app.get("/api/track", async (req, res) => {
         console.log("Navigating to:", url);
 
         // Set the waitUntil to "domcontentloaded" for faster loading
-        await page.goto(url, { waitUntil: "domcontentloaded", timeout: 120000 });
+        await page.goto(url, { waitUntil: "networkidle2", timeout: 120000 });
 
         await page.waitForFunction(() => {
             return !document.body.innerText.includes("Please reload the page");

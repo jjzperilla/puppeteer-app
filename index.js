@@ -20,7 +20,7 @@ app.get("/api/track", async (req, res) => {
     try {
         browser = await puppeteer.launch({
             headless: "new", // Use the latest headless mode
-           
+            executablePath: '/opt/render/project/.render/chrome/opt/google/chrome/chrome',
             args: ["--no-sandbox", "--disable-setuid-sandbox"]
         });
 

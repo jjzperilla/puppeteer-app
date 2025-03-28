@@ -18,20 +18,11 @@ app.get("/api/track", async (req, res) => {
     let browser;
 
     try {
-        console.log(`Starting to scrape tracking number: ${trackingNumber}`);
-        
-      browser = await puppeteer.launch({
-    headless: true, // Use headless mode
-    executablePath: '/opt/render/project/.render/chrome/opt/google/chrome/chrome',
-    args: [
-        "--no-sandbox", 
-        "--disable-setuid-sandbox",
-        "--disable-software-rasterizer",
-        "--headless",  // Ensure headless mode is enforced
-        "--disable-gpu",
-        "--remote-debugging-port=9222" // Enable debugging port for remote
-    ]
-});
+        browser = await puppeteer.launch({
+            headless: "new", // Use the latest headless mode
+           
+            args: ["--no-sandbox", "--disable-setuid-sandbox"]
+        });
 
         const page = await browser.newPage();
 
@@ -41,11 +32,22 @@ app.get("/api/track", async (req, res) => {
 
         await page.setExtraHTTPHeaders({ "Accept-Language": "en-US,en;q=0.9" });
 
-        console.log(`Navigating to ${url}`);
-        await page.goto(url, { waitUntil: "networkidle2", timeout: 120000 }); // Increased timeout
+        // Block unnecessary resources to speed up the load
+        await page.setRequestInterception(true);
+        page.on("request", (request) => {
+            if (request.resourceType() === "image" || request.resourceType() === "stylesheet" || request.resourceType() === "font") {
+                request.abort();
+            } else {
+                request.continue();
+            }
+        });
 
-        console.log("Waiting for page elements to load...");
-        await page.waitForSelector(".parcel-attributes", { timeout: 120000 }); // Wait for a specific element
+        // Set a longer timeout for page navigation
+        await page.goto(url, { waitUntil: "networkidle2", timeout: 120000 });
+
+        await page.waitForFunction(() => {
+            return !document.body.innerText.includes("Please reload the page");
+        }, { timeout: 120000 }).catch(() => console.log("Wait function timed out"));
 
         const trackingEvents = await page.evaluate(() => {
             return Array.from(document.querySelectorAll(".event")).map(event => ({
@@ -70,21 +72,16 @@ app.get("/api/track", async (req, res) => {
         });
 
         if (!trackingEvents.length) {
-            console.log("No tracking information found.");
             return res.status(404).json({ error: "Tracking information not found." });
         }
 
-        console.log("Scraping successful!");
         res.json({ tracking_details: trackingEvents, parcel_info: parcelInfo });
 
     } catch (error) {
         console.error("Scraping error:", error);
         res.status(500).json({ error: error.message });
     } finally {
-        if (browser) {
-            console.log("Closing the browser.");
-            await browser.close();
-        }
+        if (browser) await browser.close();
     }
 });
 
